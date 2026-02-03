@@ -1,96 +1,227 @@
 import json
 import math
 import os
+import csv
+import random
+from datetime import datetime, timedelta
 
 
+# Basic distance helper
 def get_distance(p1, p2):
-    """Calculate Euclidean distance between two points."""
     x1, y1 = p1
     x2, y2 = p2
     return math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
 
 
-def process_file(input_file, output_file):
-    with open(input_file, "r") as f:
+#  delay 
+def simulate_delivery_delay():
+    return random.randint(0, 30)
+
+
+# Console visualization 
+def visualize_route(agent_loc, warehouse_loc, destination, agent_id, pkg_no):
+    print("\n" + "=" * 60)
+    print(f"Route - Agent {agent_id} | Package {pkg_no}")
+    print("=" * 60)
+
+    d1 = get_distance(agent_loc, warehouse_loc)
+    d2 = get_distance(warehouse_loc, destination)
+
+    print(f"\nAgent @ {agent_loc}")
+    print("   |")
+    print(f"   | {d1:.2f}")
+    print("   v")
+    print(f"Warehouse @ {warehouse_loc}")
+    print("   |")
+    print(f"   | {d2:.2f}")
+    print("   v")
+    print(f"Destination @ {destination}")
+
+    print(f"\nTotal distance: {(d1 + d2):.2f}")
+    print("=" * 60)
+
+
+#  new agent while system is running
+def add_dynamic_agent(agents, agent_id, location):
+    agents[agent_id] = location
+    print(f"[INFO] Agent {agent_id} joined at {location}")
+    return agents
+
+
+# Export summary + logs
+def export_to_csv(report, output_file, delivery_logs):
+    summary_csv = output_file.replace(".json", ".csv")
+
+    with open(summary_csv, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "Agent ID",
+            "Packages Delivered",
+            "Total Distance",
+            "Efficiency",
+            "Best Agent",
+            "Avg Delay (min)"
+        ])
+
+        best_agent = report.get("best_agent")
+
+        for agent_id, data in report.items():
+            if agent_id in ("best_agent", "dynamic_agents_added"):
+                continue
+
+            writer.writerow([
+                agent_id,
+                data["packages_delivered"],
+                data["total_distance"],
+                data["efficiency"],
+                "Yes" if agent_id == best_agent else "No",
+                data.get("avg_delay", 0)
+            ])
+
+    print(f"✓ CSV created: {summary_csv}")
+
+    logs_csv = output_file.replace(".json", "_delivery_logs.csv")
+    with open(logs_csv, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "Package No",
+            "Agent",
+            "Warehouse",
+            "Distance",
+            "Delay (min)",
+            "Timestamp"
+        ])
+        writer.writerows(delivery_logs)
+
+    print(f"✓ Logs CSV created: {logs_csv}")
+
+
+def process_file(input_file, output_file, show_routes=False, dynamic_agents=False):
+    with open(input_file) as f:
         data = json.load(f)
 
     warehouses = data["warehouses"]
-    agents = data["agents"]
+    agents = data["agents"].copy()
     packages = data["packages"]
 
     report = {}
+    delivery_logs = []
+    agent_delays = {a: [] for a in agents}
+    dynamic_added = []
 
-    # Initialize report for each agent
     for agent in agents:
         report[agent] = {
             "packages_delivered": 0,
-            "total_distance": 0.0
+            "total_distance": 0.0,
+            "total_delay": 0
         }
 
-    # Process each package
-    for pkg in packages:
+    total_pkgs = len(packages)
+
+    for idx, pkg in enumerate(packages, start=1):
+
+        # Add agents mid-way if enabled
+        if dynamic_agents and total_pkgs > 4:
+            if idx in (total_pkgs // 4, total_pkgs // 2):
+                new_id = f"agent_{len(agents) + 1}"
+                new_loc = [random.randint(0, 100), random.randint(0, 100)]
+                add_dynamic_agent(agents, new_id, new_loc)
+
+                agents[new_id] = new_loc
+                report[new_id] = {
+                    "packages_delivered": 0,
+                    "total_distance": 0.0,
+                    "total_delay": 0
+                }
+                agent_delays[new_id] = []
+                dynamic_added.append(new_id)
+
         warehouse_id = pkg["warehouse"]
-        warehouse_location = warehouses[warehouse_id]
+        warehouse_loc = warehouses[warehouse_id]
 
-        # ASSUMPTION: Find nearest agent to warehouse using Euclidean distance
-        # If multiple agents are equidistant, first one in iteration order is selected
-        nearest_agent = None
-        shortest_distance = float("inf")
+        # Pick nearest agent
+        chosen_agent = None
+        min_dist = float("inf")
 
-        for agent_id, agent_location in agents.items():
-            d = get_distance(agent_location, warehouse_location)
-            if d < shortest_distance:
-                shortest_distance = d
-                nearest_agent = agent_id
+        for agent_id, agent_loc in agents.items():
+            d = get_distance(agent_loc, warehouse_loc)
+            if d < min_dist:
+                min_dist = d
+                chosen_agent = agent_id
 
-        # ASSUMPTION: Agent position remains static (doesn't update after delivery)
-        agent_location = agents[nearest_agent]
+        agent_loc = agents[chosen_agent]
         destination = pkg["destination"]
 
-        # Calculate total travel: agent -> warehouse -> destination
-        travel_distance = (
-            get_distance(agent_location, warehouse_location) +
-            get_distance(warehouse_location, destination)
+        distance = (
+            get_distance(agent_loc, warehouse_loc) +
+            get_distance(warehouse_loc, destination)
         )
 
-        report[nearest_agent]["packages_delivered"] += 1
-        report[nearest_agent]["total_distance"] += travel_distance
+        delay = simulate_delivery_delay()
+        agent_delays[chosen_agent].append(delay)
 
-    # Calculate efficiency (lower is better)
-    # ASSUMPTION: Efficiency = total_distance / packages_delivered
+        if show_routes and idx <= 3:
+            visualize_route(agent_loc, warehouse_loc, destination, chosen_agent, idx)
+
+        report[chosen_agent]["packages_delivered"] += 1
+        report[chosen_agent]["total_distance"] += distance
+        report[chosen_agent]["total_delay"] += delay
+
+        delivery_logs.append([
+            idx,
+            chosen_agent,
+            warehouse_id,
+            round(distance, 2),
+            delay,
+            (datetime.now() + timedelta(minutes=delay)).strftime("%Y-%m-%d %H:%M:%S")
+        ])
+
+    # Calculate efficiency
     best_agent = None
-    best_efficiency = float("inf")
+    best_eff = float("inf")
 
-    for agent in report:
-        count = report[agent]["packages_delivered"]
+    for agent, data in report.items():
+        count = data["packages_delivered"]
 
-        if count > 0:
-            total = round(report[agent]["total_distance"], 2)
-            efficiency = round(total / count, 2)
+        if count == 0:
+            data["efficiency"] = 0
+            data["avg_delay"] = 0
+            continue
 
-            report[agent]["total_distance"] = total
-            report[agent]["efficiency"] = efficiency
+        data["total_distance"] = round(data["total_distance"], 2)
+        data["efficiency"] = round(data["total_distance"] / count, 2)
+        data["avg_delay"] = round(data["total_delay"] / count, 2)
 
-            # ASSUMPTION: In case of tie, first agent with best efficiency wins
-            if efficiency < best_efficiency:
-                best_efficiency = efficiency
-                best_agent = agent
-        else:
-            # ASSUMPTION: Agents with 0 deliveries get efficiency = 0
-            report[agent]["efficiency"] = 0
+        if data["efficiency"] < best_eff:
+            best_eff = data["efficiency"]
+            best_agent = agent
 
     report["best_agent"] = best_agent
+    if dynamic_added:
+        report["dynamic_agents_added"] = dynamic_added
 
     with open(output_file, "w") as f:
         json.dump(report, f, indent=4)
 
-    print(f"Generated {output_file}")
+    print(f"✓ JSON created: {output_file}")
+    export_to_csv(report, output_file, delivery_logs)
 
 
-# Process all test cases (1-10)
+print("=" * 60)
+print("DELIVERY SYSTEM RUN")
+print("=" * 60)
+
 for i in range(1, 11):
-    input_name = f"test_case_{i}.json"
-    output_name = f"test_case_report_{i}.json"
+    input_file = f"test_case_{i}.json"
+    output_file = f"test_case_report_{i}.json"
 
-    if os.path.exists(input_name):
-        process_file(input_name, output_name)
+    if os.path.exists(input_file):
+        print(f"\nProcessing {input_file}")
+        process_file(
+            input_file,
+            output_file,
+            show_routes=(i == 1),
+            dynamic_agents=True
+        )
+
+print("\nAll test cases completed.")

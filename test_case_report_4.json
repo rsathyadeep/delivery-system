@@ -2,27 +2,55 @@
     "A1": {
         "packages_delivered": 3,
         "total_distance": 97.18,
-        "efficiency": 32.39
+        "total_delay": 74,
+        "efficiency": 32.39,
+        "avg_delay": 24.67
     },
     "A2": {
         "packages_delivered": 4,
         "total_distance": 164.88,
-        "efficiency": 41.22
+        "total_delay": 66,
+        "efficiency": 41.22,
+        "avg_delay": 16.5
     },
     "A3": {
         "packages_delivered": 5,
         "total_distance": 100.4,
-        "efficiency": 20.08
+        "total_delay": 127,
+        "efficiency": 20.08,
+        "avg_delay": 25.4
     },
     "A4": {
         "packages_delivered": 0,
         "total_distance": 0.0,
-        "efficiency": 0
+        "total_delay": 0,
+        "efficiency": 0,
+        "avg_delay": 0
     },
     "A5": {
         "packages_delivered": 0,
         "total_distance": 0.0,
-        "efficiency": 0
+        "total_delay": 0,
+        "efficiency": 0,
+        "avg_delay": 0
     },
-    "best_agent": "A3"
+    "agent_6": {
+        "packages_delivered": 0,
+        "total_distance": 0.0,
+        "total_delay": 0,
+        "efficiency": 0,
+        "avg_delay": 0
+    },
+    "agent_7": {
+        "packages_delivered": 0,
+        "total_distance": 0.0,
+        "total_delay": 0,
+        "efficiency": 0,
+        "avg_delay": 0
+    },
+    "best_agent": "A3",
+    "dynamic_agents_added": [
+        "agent_6",
+        "agent_7"
+    ]
 }

@@ -2,22 +2,48 @@
     "A1": {
         "packages_delivered": 0,
         "total_distance": 0.0,
-        "efficiency": 0
+        "total_delay": 0,
+        "efficiency": 0,
+        "avg_delay": 0
     },
     "A2": {
-        "packages_delivered": 2,
-        "total_distance": 129.33,
-        "efficiency": 64.67
+        "packages_delivered": 0,
+        "total_distance": 0.0,
+        "total_delay": 0,
+        "efficiency": 0,
+        "avg_delay": 0
     },
     "A3": {
         "packages_delivered": 3,
         "total_distance": 56.88,
-        "efficiency": 18.96
+        "total_delay": 33,
+        "efficiency": 18.96,
+        "avg_delay": 11.0
     },
     "A4": {
         "packages_delivered": 1,
         "total_distance": 23.23,
-        "efficiency": 23.23
+        "total_delay": 14,
+        "efficiency": 23.23,
+        "avg_delay": 14.0
     },
-    "best_agent": "A3"
+    "agent_5": {
+        "packages_delivered": 2,
+        "total_distance": 79.65,
+        "total_delay": 34,
+        "efficiency": 39.83,
+        "avg_delay": 17.0
+    },
+    "agent_6": {
+        "packages_delivered": 0,
+        "total_distance": 0.0,
+        "total_delay": 0,
+        "efficiency": 0,
+        "avg_delay": 0
+    },
+    "best_agent": "A3",
+    "dynamic_agents_added": [
+        "agent_5",
+        "agent_6"
+    ]
 }

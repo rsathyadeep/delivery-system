@@ -1,0 +1,7 @@
+Agent ID,Packages Delivered,Total Distance,Efficiency,Best Agent,Avg Delay (min)
+A1,4,76.39,19.1,Yes,18.25
+A2,1,31.36,31.36,No,3.0
+A3,7,137.9,19.7,No,16.86
+A4,0,0.0,0,No,0
+agent_5,0,0.0,0,No,0
+agent_6,0,0.0,0,No,0
