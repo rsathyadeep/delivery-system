@@ -224,4 +224,6 @@ for i in range(1, 11):
             dynamic_agents=True
         )
 
+        print("\nProcessing completed.")
+
 print("\nAll test cases completed.")
